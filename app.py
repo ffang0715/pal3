@@ -23,9 +23,9 @@ logging.getLogger("pdfminer").setLevel(logging.ERROR)
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
 
-BUCKET_ORDER = ["常溫", "冷藏", "冷凍"]
-BUCKET_TINT = {"常溫": "#f4efe4", "冷藏": "#e7f0f7", "冷凍": "#e6f2f4"}
-BUCKET_INK = {"常溫": "#8a6d3b", "冷藏": "#2e6da4", "冷凍": "#2f7d8c"}
+BUCKET_ORDER = ["常溫", "常溫/冷藏", "冷藏", "冷凍"]
+BUCKET_TINT = {"常溫": "#f4efe4", "常溫/冷藏": "#eef1e2", "冷藏": "#e7f0f7", "冷凍": "#e6f2f4"}
+BUCKET_INK = {"常溫": "#8a6d3b", "常溫/冷藏": "#6f7d3e", "冷藏": "#2e6da4", "冷凍": "#2f7d8c"}
 
 
 # ============================================================
@@ -33,13 +33,25 @@ BUCKET_INK = {"常溫": "#8a6d3b", "冷藏": "#2e6da4", "冷凍": "#2f7d8c"}
 # ============================================================
 def categorize(sku, name, spec):
     """
-    回傳 (籃子, sku_ok)。
-    sku_ok=True 代表這一列是靠 SKU 判斷的；
-    False 代表 SKU 還沒填，暫時改用商品名稱／規格判斷。
+    回傳 (籃子, sku_ok)。以 SKU 為準：
+      含「冷凍」            -> 冷凍
+      同時含「常溫」和「冷藏」-> 常溫/冷藏
+      只含「冷藏」          -> 冷藏
+      只含「常溫」          -> 常溫
+    SKU 沒填（或沒有溫層字）時，改用商品名稱／規格判斷，並標 sku_ok=False。
     """
-    for b in ("冷凍", "冷藏", "常溫"):
-        if b in sku:
-            return b, True
+    if sku.strip():
+        frozen = "冷凍" in sku
+        chilled = "冷藏" in sku
+        room = "常溫" in sku
+        if frozen:
+            return "冷凍", True
+        if room and chilled:
+            return "常溫/冷藏", True
+        if chilled:
+            return "冷藏", True
+        if room:
+            return "常溫", True
     blob = f"{name} {spec}"
     if "冷凍" in blob:
         return "冷凍", False
