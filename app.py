@@ -242,6 +242,15 @@ UPLOAD_PAGE = """<!DOCTYPE html>
   #drop .small { font-size:13px; color:#8a7a5c; }
   input[type=file] { display:none; }
   .foot { margin-top:18px; font-size:12px; color:#a2926f; }
+  #loading { position:fixed; top:0; left:0; right:0; bottom:0; width:100%; height:100%;
+             background:rgba(239,234,224,.94);
+             display:none; flex-direction:column; align-items:center; justify-content:center; z-index:100; }
+  #loading.on { display:flex; }
+  .spinner { width:48px; height:48px; border:4px solid #d8ccae; border-top-color:#7a6647;
+             border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #loading .txt { margin-top:16px; color:#5b4a2f; font-weight:700; font-size:16px; }
+  #loading .sub2 { margin-top:6px; color:#8a7a5c; font-size:13px; }
 </style></head>
 <body>
   <div class="card">
@@ -256,10 +265,15 @@ UPLOAD_PAGE = """<!DOCTYPE html>
     </form>
     <div class="foot">處理完成後按「列印 / 存成 PDF」即可存成 PDF</div>
   </div>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="txt">處理中…</div>
+    <div class="sub2">正在讀取 PDF 並分類，大檔可能要幾秒</div>
+  </div>
 <script>
   const drop=document.getElementById('drop'), inp=document.getElementById('file'),
-        form=document.getElementById('f');
-  function go(){ if(inp.files.length){ form.submit(); } }
+        form=document.getElementById('f'), loading=document.getElementById('loading');
+  function go(){ if(inp.files.length){ loading.classList.add('on'); form.submit(); } }
   inp.addEventListener('change', go);
   ['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('hover');}));
   ['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('hover');}));
